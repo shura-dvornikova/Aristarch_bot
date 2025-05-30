@@ -18,6 +18,7 @@ COPY bot/ bot/
 # 5️⃣  (Опционально) Локальные картинки
 #    Нужен ТОЛЬКО если в викторине используются "image_file": "xxx.png"
 COPY bot/images/ bot/images/
+COPY bot/fonts/ bot/fonts/
 
 # 6️⃣  Команда по умолчанию
 CMD ["python", "-m", "bot"]
