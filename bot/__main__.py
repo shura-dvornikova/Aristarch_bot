@@ -1,7 +1,10 @@
 import asyncio
 import json
 import logging
+import os
+import tempfile
 from pathlib import Path
+from typing import List
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -14,66 +17,66 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
+    FSInputFile,
 )
 
+from fpdf import FPDF
 from .config import config
 
-# ─── базовая настройка логирования ──────────────────────────────────────────
+# ────────── инфраструктура ────────────────────────────────────────────────
 logging.basicConfig(level=logging.INFO)
 
-# ─── загрузка вопросов ──────────────────────────────────────────────────────
-QUIZ_PATH = Path(__file__).parent / "data" / "quizzes.json"
-try:
-    with QUIZ_PATH.open(encoding="utf-8") as f:
-        QUIZZES: dict[str, list[dict]] = json.load(f)
-except FileNotFoundError:
-    raise RuntimeError(f"Файл с вопросами не найден: {QUIZ_PATH}")
-except json.JSONDecodeError as e:
-    raise RuntimeError(f"Ошибка синтаксиса в quizzes.json: {e}") from e
+BASE_DIR = Path(__file__).parent          # …/bot
+IMG_DIR  = BASE_DIR.parent / "images"     # …/images
+QUIZ_PATH = BASE_DIR / "data" / "quizzes.json"
 
-# ─── инициализация бота и диспетчера ────────────────────────────────────────
+with QUIZ_PATH.open(encoding="utf-8") as f:
+    QUIZZES: dict[str, List[dict]] = json.load(f)
+
 bot = Bot(
     token=config.bot_token,
     default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN),
 )
 dp = Dispatcher()
 
-# ─── fsm-состояния ──────────────────────────────────────────────────────────
+# ────────── FSM ────────────────────────────────────────────────────────────
 class QuizState(StatesGroup):
     waiting_for_answer = State()
 
-# ─── хэндлеры ───────────────────────────────────────────────────────────────
+class ReportChoice(StatesGroup):
+    waiting = State()
+
+# ────────── PDF helper ─────────────────────────────────────────────────────
+def build_pdf(lines: List[str], image_paths: List[str]) -> str:
+    pdf = FPDF(format="A4")
+    pdf.set_auto_page_break(True, margin=15)
+    for text, img in zip(lines, image_paths):
+        pdf.add_page()
+        pdf.set_font("Helvetica", size=12)
+        pdf.multi_cell(0, 10, text)
+        if img and Path(img).exists():
+            pdf.ln(5)
+            pdf.image(img, w=170)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    pdf.output(tmp.name)
+    return tmp.name
+
+# ────────── хэндлеры ───────────────────────────────────────────────────────
 @dp.message(Command("start"))
 async def cmd_start(msg: Message) -> None:
-    """Стартовое меню: выбор темы."""
-    topics = list(QUIZZES.keys())
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=topic, callback_data=f"topic:{topic}")]
-            for topic in topics
+            [InlineKeyboardButton(text=t, callback_data=f"topic:{t}")]
+            for t in QUIZZES.keys()
         ]
     )
     await msg.answer("*Привет!*\nВыбери тему викторины:", reply_markup=kb)
 
-
 @dp.callback_query(lambda cb: cb.data.startswith("topic:"))
 async def choose_topic(cb: CallbackQuery, state: FSMContext) -> None:
-    """Пользователь щёлкнул по теме — начинаем викторину."""
     topic = cb.data.split(":", 1)[1]
-    await state.update_data(
-        topic=topic,
-        idx=0,
-        score=0,
-        results=[]            # ➊ сюда будем складывать ответы
-    )
+    await state.update_data(topic=topic, idx=0, score=0, results=[])
     await ask_question(cb.message, state)
-
-#@dp.message(lambda m: m.photo)
-#async def echo_file_id(msg: Message):
-    #file_id = msg.photo[-1].file_id
-    #await msg.answer(file_id)      # отправит вам ID в чат
-    # print(file_id)               # можно и в консоль
-
 
 async def ask_question(msg: Message, state: FSMContext) -> None:
     data   = await state.get_data()
@@ -88,41 +91,35 @@ async def ask_question(msg: Message, state: FSMContext) -> None:
             for i, opt in enumerate(q["options"])
         ]
     )
+    caption = f"❓_Вопрос {idx + 1} из {total}_\n\n*{q['question']}*"
 
-    caption = (
-        f"❓_Вопрос {idx + 1} из {total}_\n\n"
-        f"*{q['question']}*"
-    )
-
-    # ── НОВОЕ: если в JSON есть file_id, шлём фото ─────────────────────────
-    if q.get("file_id"):
-        await msg.answer_photo(
-            q["file_id"],           # тот самый AgACAgIAAxk… из Telegram
-            caption=caption,
-            reply_markup=kb,
-            parse_mode=ParseMode.MARKDOWN,
-        )
+    if fname := q.get("image_file"):
+        file_path = IMG_DIR / fname
+        if file_path.exists():
+            await msg.answer_photo(
+                FSInputFile(file_path),
+                caption=caption,
+                reply_markup=kb,
+                parse_mode=ParseMode.MARKDOWN,
+            )
+        else:
+            logging.warning("Картинка не найдена: %s", file_path)
+            await msg.answer(caption, reply_markup=kb)
     else:
-        # старый путь — вопрос без картинки
         await msg.answer(caption, reply_markup=kb)
 
     await state.set_state(QuizState.waiting_for_answer)
 
-
-
 @dp.callback_query(QuizState.waiting_for_answer)
 async def handle_answer(cb: CallbackQuery, state: FSMContext) -> None:
     data   = await state.get_data()
-    topic  = data["topic"]
-    idx    = data["idx"]
+    topic, idx = data["topic"], data["idx"]
     q      = QUIZZES[topic][idx]
-    chosen = int(cb.data.split(":", 1)[1])
+
+    chosen  = int(cb.data.split(":", 1)[1])
     correct = chosen == q["correct"]
 
-    # ➋ дописываем в results
     data["results"].append({"idx": idx, "correct": correct})
-    # (можно сразу state.update_data(results=data["results"]) ― несложно)
-
     score = data["score"] + int(correct)
     next_idx = idx + 1
 
@@ -131,42 +128,60 @@ async def handle_answer(cb: CallbackQuery, state: FSMContext) -> None:
     if next_idx < len(QUIZZES[topic]):
         await state.update_data(idx=next_idx, score=score, results=data["results"])
         await ask_question(cb.message, state)
+        return
 
-    else:
-        # ── выводим итог + подробный отчёт ─────────────────────
-        lines = []
-        for i, item in enumerate(data["results"], start=1):
-            q_obj = QUIZZES[topic][item["idx"]]
-            mark  = "✅" if item["correct"] else "❌"
-            right = q_obj["options"][q_obj["correct"]]
-            lines.append(f"{mark} *Вопрос {i}:* {q_obj['question']}\n *Правильный ответ:* _{right}_")
+    # ─ финальное сообщение + выбор формата отчёта ─
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(text="📝 Показать отчёт", callback_data="report:text"),
+            InlineKeyboardButton(text="📄 PDF с картинками", callback_data="report:pdf"),
+        ]]
+    )
+    await cb.message.answer(
+        f"🏁 Конец!\nПравильных ответов: *{score}* из *{len(data['results'])}*\n\n"
+        "Выберите формат отчёта:",
+        reply_markup=kb,
+    )
+    await state.update_data(score=score)
+    await state.set_state(ReportChoice.waiting)
 
-        report = "\n\n".join(lines)
+# ─ текстовый отчёт ─
+@dp.callback_query(lambda c: c.data == "report:text", ReportChoice.waiting)
+async def send_text_report(cb: CallbackQuery, state: FSMContext) -> None:
+    data = await state.get_data()
+    lines = []
+    for i, item in enumerate(data["results"], 1):
+        q_obj = QUIZZES[data["topic"]][item["idx"]]
+        mark  = "✅" if item["correct"] else "❌"
+        right = q_obj["options"][q_obj["correct"]]
+        lines.append(f"{mark} *Вопрос {i}:* {q_obj['question']}\n *Верный ответ:* _{right}_")
+    await cb.message.answer("\n\n".join(lines))
+    await state.clear()
 
-        await cb.message.answer(
-            f"🏁 Конец!\nПравильных ответов: *{score}* из *{len(data['results'])}*\n\n{report}"
-        )
-        await state.clear()
+# ─ PDF-отчёт ─
+@dp.callback_query(lambda c: c.data == "report:pdf", ReportChoice.waiting)
+async def send_pdf_report(cb: CallbackQuery, state: FSMContext) -> None:
+    data = await state.get_data()
+    report_lines, img_paths = [], []
 
-        # ➕ показываем предложение сыграть снова
-        topics = list(QUIZZES.keys())
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text=t, callback_data=f"topic:{t}")]
-                for t in topics
-            ]
-        )
-        await cb.message.answer(
-            "🔄 Хочешь сыграть ещё раз? Выбери тему:",
-            reply_markup=kb,
-        )
+    for i, item in enumerate(data["results"], 1):
+        q_obj = QUIZZES[data["topic"]][item["idx"]]
+        # слова вместо эмодзи
+        mark_pdf  = "ВЕРНО" if item["correct"] else "НЕВЕРНО"
+        right = q_obj["options"][q_obj["correct"]]
+        report_lines.append(f"{mark_pdf}: Вопрос {i}: {q_obj['question']} — ответ: {right}")
+        img_paths.append(str(IMG_DIR / q_obj["image_file"]) if q_obj.get("image_file") else None)
 
-# ─── запуск ────────────────────────────────────────────────────────────────
+    pdf_path = build_pdf(report_lines, img_paths)
+    await cb.message.answer_document(open(pdf_path, "rb"), caption="PDF-отчёт")
+    os.remove(pdf_path)
+    await state.clear()
+
+# ─ запуск ─
 async def main() -> None:
     if not config.bot_token:
         raise RuntimeError("BOT_TOKEN не найден. Добавьте его в .env")
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

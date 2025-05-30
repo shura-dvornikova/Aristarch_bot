@@ -1,52 +1,13 @@
 {
-  "Киевская Русь X-XII": [
+  " Древняя Русь": [
     {
-      "question": "Какой процесс имеет PID 1 в Linux?",
-      "options": ["systemd", "init", "sshd", "bash"],
-      "correct": 0
+      "question": "Какое сооружение изображено на картинке?",
+      "options": ["Собо́р Свято́й Софи́и в Киеве", "Собо́р Свято́й Софи́и в Киеве", "sshd", "bash"],
+      "correct": 0,
+      "image_file": "kyiv_cathedral.jpg"
     },
     {
-      "question": "Что делает команда `chmod +x script.sh`?",
-      "options": [
-        "Удаляет файл",
-        "Меняет владельца файла",
-        "Добавляет право на исполнение",
-        "Показывает содержимое файла"
-      ],
-      "correct": 2
-    },
-    {
-      "question": "Что такое systemd?",
-      "options": [
-        "Это менеджер системы и сервисов в операционной системе Linux",
-        "Порядок хранения файлов на диске или другом информационном носителе",
-        "Древовидная сложная структура, начинающаяся с корня",
-        "Процесс, который работает в фоновом режиме без прямого участия пользователя"
-      ],
-      "correct": 0
-    },
-    {
-      "question": "SSH (Secure SHell - защищенная оболочка) - это ...",
-      "options": [
-        "сетевая модель, описывающая процесс передачи цифровых данных",
-        "уникальный адрес, который идентифицирует устройство в Интеренете или локальной сети.",
-        "менеджер системы и сервисов в операционной системе Linux",
-        "сетевой протокол прикладного уровня для безопасного удаленного управления сервером через интеренет."
-      ],
-      "correct": 3
-    },
-    {
-      "question": "Антон - попка?",
-      "options": [
-        "Антон не любит Сашу",
-        "Антон не любит Сашу",
-        "Попка",
-        "Антон не любит Сашу"
-      ],
-      "correct": 2
-    },
-    {
-      "question": "Как зовут этого персонажа?",
+      "question": "Какое сооружение изображено на картинке?",
       "options": [
         "Линус Торвальдс",
         "Пингвин Тукс",
@@ -54,44 +15,131 @@
         "Торвальд Линукс"
       ],
       "correct": 1,
-      "file_id": "AgACAgIAAxkBAAICbGg27PHth1pmCEZYVl4hIh6VPY7fAALM9TEbGAS4SQjCmXg4C-BzAQADAgADeQADNgQ"
-    }
-  ],
-  "Docker": [
-    {
-      "question": "Какая команда создаёт новый контейнер и сразу запускает его?",
-      "options": ["docker create", "docker run", "docker start", "docker exec"],
-      "correct": 1
+      "image_file": "640px-Vladimir_gate_06_06_2004.jpg"
     },
     {
-      "question": "Файл с инструкциями для сборки образа называется …",
+      "question": "Какое сооружение изображено на картинке?",
+      "options": [
+        "Линус Торвальдс",
+        "Пингвин Тукс",
+        "Винпинг Шмукс",
+        "Торвальд Линукс"
+      ],
+      "correct": 1,
+      "image_file": "960px-Ilyina_Transfiguration_church,_Novgorod.jpeg"
+    }
+  ],
+  "Барокко": [
+    {
+      "question": "Какое сооружение изображено на картинке?",
+      "options": ["docker create", "docker run", "docker start", "docker exec"],
+      "correct": 1,
+      "image_file": "640px-Vladimir_gate_06_06_2004.jpg"
+    },
+    {
+      "question": "Какое сооружение изображено на картинке?",
       "options": ["Containerfile", "Dockerfile", "compose.yaml", "Makefile"],
-      "correct": 1
+      "correct": 1,
+      "image_file": "960px-Ilyina_Transfiguration_church,_Novgorod.jpeg"
     }
   ],
 
-  "Kubernetes": [
+  "Классицизм": [
     {
-      "question": "Какой объект отвечает за постоянный перезапуск подов при их падении?",
+      "question": "Какое сооружение изображено на картинке?",
       "options": ["Service", "Deployment", "ConfigMap", "Node"],
-      "correct": 1
+      "correct": 1,
+      "image_file": "960px-Kolomenskoe_Ascension_Church_only.jpg"
     },
     {
-      "question": "Компонент, который распределяет поды по нодам кластера:",
+      "question": "Какое сооружение изображено на картинке?",
       "options": ["kube-proxy", "scheduler", "kubelet", "controller-manager"],
-      "correct": 1
+      "correct": 1,
+      "image_file": "960px-MoscowKremlin_AssumptionCathedral3.jpg"
     }
   ],
-  "Аппаратная часть": [
+  "Эклектика": [
     {
-      "question": "Сервер не отвечает, как можно получить доступ к серверу, не находясь непосредственно в ЦОДЕ",
+      "question": "Какое сооружение изображено на картинке?",
       "options": ["Через IPMI или kvm", "Звонить дежурному", "Оба варианта"],
-      "correct": 2
+      "correct": 2,
+      "image_file": "960px-St._Sophia_Cathedral_in_Polotsk_-_Miniature.jpeg"
     },
     {
       "question": "Что такое POSIX?",
       "options": ["kube-proxy", "scheduler", "kubelet", "controller-manager"],
-      "correct": 1
+      "correct": 1,
+      "image_file": "1106px-Church_of_the_Protection_of_the_Theotokos_on_the_Nerl_10.jpg"
+    }
+  ],
+  "Модерн": [
+    {
+      "question": "Сервер не отвечает, как можно получить доступ к серверу, не находясь непосредственно в ЦОДЕ",
+      "options": ["Через IPMI или kvm", "Звонить дежурному", "Оба варианта"],
+      "correct": 2,
+      "image_file": "hram_pokrova_na_nerli.jpg"
+    },
+    {
+      "question": "Что такое POSIX?",
+      "options": ["kube-proxy", "scheduler", "kubelet", "controller-manager"],
+      "correct": 1,
+      "image_file": "960px-Ilyina_Transfiguration_church,_Novgorod.jpeg"
+    }
+  ],
+  "Авангард": [
+    {
+      "question": "Сервер не отвечает, как можно получить доступ к серверу, не находясь непосредственно в ЦОДЕ",
+      "options": ["Через IPMI или kvm", "Звонить дежурному", "Оба варианта"],
+      "correct": 2,
+      "image_file": "kyiv_cathedral.jpg"
+    },
+    {
+      "question": "Что такое POSIX?",
+      "options": ["kube-proxy", "scheduler", "kubelet", "controller-manager"],
+      "correct": 1,
+      "image_file": "kyiv_cathedral.jpg"
+    }
+  ],
+  "Сталинский классицизм": [
+    {
+      "question": "Сервер не отвечает, как можно получить доступ к серверу, не находясь непосредственно в ЦОДЕ",
+      "options": ["Через IPMI или kvm", "Звонить дежурному", "Оба варианта"],
+      "correct": 2,
+      "image_file": "8kyiv_cathedral.jpg"
+    },
+    {
+      "question": "Что такое POSIX?",
+      "options": ["kube-proxy", "scheduler", "kubelet", "controller-manager"],
+      "correct": 1,
+      "image_file": "kyiv_cathedral.jpg"
+    }
+  ],
+  "Модернизм": [
+    {
+      "question": "Сервер не отвечает, как можно получить доступ к серверу, не находясь непосредственно в ЦОДЕ",
+      "options": ["Через IPMI или kvm", "Звонить дежурному", "Оба варианта"],
+      "correct": 2,
+      "image_file": "kyiv_cathedral.jpg"
+    },
+    {
+      "question": "Что такое POSIX?",
+      "options": ["kube-proxy", "scheduler", "kubelet", "controller-manager"],
+      "correct": 1,
+      "image_file": "kyiv_cathedral.jpg"
+    }
+  ],
+  "Конец XX века": [
+    {
+      "question": "Сервер не отвечает, как можно получить доступ к серверу, не находясь непосредственно в ЦОДЕ",
+      "options": ["Через IPMI или kvm", "Звонить дежурному", "Оба варианта"],
+      "correct": 2,
+      "image_file": "kyiv_cathedral.jpg"
+    },
+    {
+      "question": "Что такое POSIX?",
+      "options": ["kube-proxy", "scheduler", "kubelet", "controller-manager"],
+      "correct": 1,
+      "image_file": "kyiv_cathedral.jpg"
     }
   ]
 }
