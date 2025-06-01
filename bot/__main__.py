@@ -200,9 +200,23 @@ async def send_text_report(cb: CallbackQuery, state: FSMContext) -> None:
     lines = []
     for i, item in enumerate(d["results"], 1):
         mark = "✅" if item["correct"] else "❌"
-        lines.append(f"{mark} *Вопрос {i}:* {item['question']}\n *Верный ответ:* _{item['correct_answer']}_")
-    await cb.message.answer("\n\n".join(lines))
+        lines.append(
+            f"{mark} *Вопрос {i}:* {item['question']}\n *Верный ответ:* _{item['correct_answer']}_"
+        )
+
+    # Telegram: max 4096 characters per message — отправляем кусками
+    chunk = ""
+    for line in lines:
+        if len(chunk) + len(line) > 3500:
+            await cb.message.answer(chunk)
+            chunk = ""
+        chunk += line + "\n\n"
+
+    if chunk:
+        await cb.message.answer(chunk)
+
     await state.clear()
+
 
 @dp.callback_query(lambda c: c.data == "report:pdf", ReportChoice.waiting)
 async def send_pdf_report(cb: CallbackQuery, state: FSMContext) -> None:
